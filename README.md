@@ -21,15 +21,15 @@
 ### Option 1: Via Omarchy Plugin Manager (Recommended)
 
 ```bash
-omarchy plugin add https://github.com/zowiehi/antimarchy.git --enable
+omarchy plugin add https://github.com/zowiehi/antimarchy.git --enable --yes
+~/.config/omarchy/plugins/zowiehi.antimarchy/bin/setup.sh
 ```
 
 ### Option 2: Via Git & Setup Script
 
 ```bash
 git clone https://github.com/zowiehi/antimarchy.git ~/.config/omarchy/plugins/zowiehi.antimarchy
-cd ~/.config/omarchy/plugins/zowiehi.antimarchy
-./bin/setup.sh
+~/.config/omarchy/plugins/zowiehi.antimarchy/bin/setup.sh
 ```
 
 ---
