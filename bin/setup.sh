@@ -3,16 +3,28 @@ set -euo pipefail
 
 echo "==> Setting up Antigravity (agy) integration for Omarchy..."
 
-# 1. Ensure agy is available
+# Function to install Antigravity CLI if missing
+install_agy() {
+  echo "==> Antigravity CLI ('agy') not found. Installing..."
+  if command -v yay &>/dev/null; then
+    yay -S --needed --noconfirm antigravity-cli
+  elif command -v paru &>/dev/null; then
+    paru -S --needed --noconfirm antigravity-cli
+  else
+    echo "⚠️  Neither yay nor paru found. Please install 'antigravity-cli' via AUR manually."
+    return 1
+  fi
+}
+
+# 1. Ensure agy is installed
 if ! command -v agy &>/dev/null; then
-  echo "⚠️  'agy' CLI not found on PATH."
-  echo "   Please install Antigravity first (e.g., yay -S antigravity-cli or via official installer)."
+  install_agy || true
 fi
 
 # 2. Setup user local bin directory
 mkdir -p "$HOME/.local/bin" "$HOME/.config/omarchy/defaults" "$HOME/.config/omarchy/extensions"
 
-# 3. Create omarchy-default-agent wrapper
+# 3. Create omarchy-default-agent wrapper with auto-installer
 cat << 'INNER_EOF' > "$HOME/.local/bin/omarchy-default-agent"
 #!/bin/bash
 agent_file="$HOME/.config/omarchy/defaults/agent"
@@ -33,9 +45,31 @@ fi
 
 case "$1" in
 agy | antigravity | gemini | gemini-cli)
+  # If agy is not installed, trigger automatic installation
+  if ! command -v agy &>/dev/null; then
+    if [[ $installing == "false" ]]; then
+      exec omarchy-launch-floating-terminal-with-presentation omarchy-default-agent --install "agy"
+    else
+      echo "==> Installing Google Antigravity (antigravity-cli)..."
+      if command -v yay &>/dev/null; then
+        yay -S --needed antigravity-cli
+      elif command -v paru &>/dev/null; then
+        paru -S --needed antigravity-cli
+      else
+        echo "Could not find yay/paru to install antigravity-cli from AUR." >&2
+        exit 1
+      fi
+    fi
+  fi
+
   mkdir -p "$(dirname "$agent_file")"
   printf '%s\n' "agy" >"$agent_file"
   echo "Default coding agent set to Antigravity (agy)"
+
+  if [[ $installing == "true" ]]; then
+    printf '\033[2J\033[3J\033[H'
+    exec omarchy-agent --inline
+  fi
   exit 0
   ;;
 *)

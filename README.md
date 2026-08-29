@@ -10,8 +10,9 @@
 ## 🌟 Features
 
 - ⚡ **Native Agent Integration**: Sets `agy` as your default coding agent across the entire Omarchy desktop environment.
+- 📦 **Automated CLI Installation**: Automatically detects and installs `antigravity-cli` via AUR (`yay`/`paru`) if not already present on the system.
+- 🔝 **Top of Menu**: Places **Antigravity (agy)** at the very top of the **Setup > Defaults > Agent** menu in Quickshell (`Super + Space`).
 - ⌨️ **Dedicated Keybindings**: Launches Antigravity directly in an Omarchy-styled agent terminal window via **`Super + Shift + A`** or **`Super + Shift + Ctrl + A`**.
-- 📋 **System Menu Option**: Adds **Antigravity (agy)** directly under **Setup > Defaults > Agent** in the Quickshell Omarchy menu (`Super + Space`).
 - 🛡️ **Deprecation Bridge**: Safely removes stale Gemini CLI installations from Mise and maps legacy calls to `agy --dangerously-skip-permissions`.
 
 ---
@@ -41,18 +42,6 @@ git clone https://github.com/zowiehi/antimarchy.git ~/.config/omarchy/plugins/zo
 | **`Super + Shift + A`** | Launch Antigravity in floating/tiled agent window |
 | **`Super + Shift + Ctrl + A`** | Launch Antigravity in floating/tiled agent window |
 | **`Super + Space`** | Open Omarchy Menu → **Setup > Defaults > Agent** |
-
----
-
-## 🛠️ Prerequisites
-
-- **Omarchy Linux** (Quickshell / Hyprland)
-- **Antigravity CLI** (`agy`):
-  ```bash
-  yay -S antigravity-cli
-  # or follow official install instructions
-  agy auth login
-  ```
 
 ---
 
