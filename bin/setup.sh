@@ -1,30 +1,53 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-echo "==> Setting up Antigravity (agy) integration for Omarchy..."
+echo "========================================================"
+echo "  Antimarchy: Antigravity (agy) Integration for Omarchy"
+echo "========================================================"
 
-# Function to install Antigravity CLI if missing
-install_agy() {
-  echo "==> Antigravity CLI ('agy') not found. Installing..."
+# Interactive consent check
+if [[ "${1:-}" != "-y" && "${1:-}" != "--yes" ]]; then
+  echo ""
+  echo "This setup script will:"
+  echo "  1. Install 'antigravity-cli' via AUR (yay/paru) if missing"
+  echo "  2. Configure Antigravity as your Omarchy default agent"
+  echo "  3. Dynamically configure Omarchy menu to place Antigravity at the top"
+  echo "  4. Add Super+Shift+A & Super+Shift+Ctrl+A hotkeys to ~/.config/hypr/bindings.lua"
+  echo "  5. Clean up deprecated Gemini CLI package references in Mise"
+  echo "  (Automatic backups of any modified files will be created)"
+  echo ""
+  read -r -p "Do you want to proceed with this configuration? [y/N] " confirm
+  if [[ ! "$confirm" =~ ^[Yy]$ ]]; then
+    echo "Setup cancelled by user."
+    exit 0
+  fi
+fi
+
+echo "==> Configuring Antigravity (agy) integration..."
+
+backup_file() {
+  local f="$1"
+  if [[ -f "$f" ]]; then
+    cp "$f" "${f}.bak.$(date +%Y%m%d%H%M%S)"
+  fi
+}
+
+# 1. Install agy if missing
+if ! command -v agy &>/dev/null; then
+  echo "==> Antigravity CLI ('agy') not found. Installing via AUR..."
   if command -v yay &>/dev/null; then
     yay -S --needed --noconfirm antigravity-cli
   elif command -v paru &>/dev/null; then
     paru -S --needed --noconfirm antigravity-cli
   else
-    echo "⚠️  Neither yay nor paru found. Please install 'antigravity-cli' via AUR manually."
-    return 1
+    echo "⚠️  Neither yay nor paru found. Please install 'antigravity-cli' manually."
   fi
-}
-
-# 1. Ensure agy is installed
-if ! command -v agy &>/dev/null; then
-  install_agy || true
 fi
 
-# 2. Setup user local bin directory
+# 2. Ensure directories exist
 mkdir -p "$HOME/.local/bin" "$HOME/.config/omarchy/defaults" "$HOME/.config/omarchy/extensions"
 
-# 3. Create omarchy-default-agent wrapper with auto-installer
+# 3. Create omarchy-default-agent wrapper
 cat << 'INNER_EOF' > "$HOME/.local/bin/omarchy-default-agent"
 #!/bin/bash
 agent_file="$HOME/.config/omarchy/defaults/agent"
@@ -45,7 +68,6 @@ fi
 
 case "$1" in
 agy | antigravity | gemini | gemini-cli)
-  # If agy is not installed, trigger automatic installation
   if ! command -v agy &>/dev/null; then
     if [[ $installing == "false" ]]; then
       exec omarchy-launch-floating-terminal-with-presentation omarchy-default-agent --install "agy"
@@ -173,79 +195,76 @@ fi
 # 7. Configure Omarchy default agent to agy
 echo "agy" > "$HOME/.config/omarchy/defaults/agent"
 
-# 8. Reorder Omarchy agent menu to place Antigravity at the top
+# 8. Dynamically construct menu configuration by inspecting the upstream system menu
 MENU_EXT="$HOME/.config/omarchy/extensions/omarchy-menu.jsonc"
-cat << 'INNER_EOF' > "$MENU_EXT"
-{
-  "setup.default.agent.claude": {
-    "icon": "󰚩",
-    "iconFont": "",
-    "label": "Antigravity (agy)",
-    "checked": "[[ \"$(omarchy-default-agent)\" == \"agy\" ]]",
-    "action": "omarchy-default-agent agy"
-  },
-  "setup.default.agent.codex": {
-    "icon": "󰛄",
-    "iconFont": "",
-    "label": "Claude",
-    "checked": "[[ \"$(omarchy-default-agent)\" == \"claude\" ]]",
-    "action": "omarchy-default-agent claude"
-  },
-  "setup.default.agent.copilot": {
-    "icon": "",
-    "iconFont": "omarchy",
-    "label": "Codex",
-    "checked": "[[ \"$(omarchy-default-agent)\" == \"codex\" ]]",
-    "action": "omarchy-default-agent codex"
-  },
-  "setup.default.agent.crush": {
-    "icon": "",
-    "iconFont": "",
-    "label": "Copilot",
-    "checked": "[[ \"$(omarchy-default-agent)\" == \"copilot\" ]]",
-    "action": "omarchy-default-agent copilot"
-  },
-  "setup.default.agent.gemini": {
-    "icon": "󰋑",
-    "iconFont": "",
-    "label": "Crush",
-    "checked": "[[ \"$(omarchy-default-agent)\" == \"crush\" ]]",
-    "action": "omarchy-default-agent crush"
-  },
-  "setup.default.agent.grok": {
-    "icon": "",
-    "iconFont": "omarchy",
-    "label": "Grok",
-    "checked": "[[ \"$(omarchy-default-agent)\" == \"grok\" ]]",
-    "action": "omarchy-default-agent grok"
-  },
-  "setup.default.agent.omp": {
-    "icon": "",
-    "iconFont": "omarchy",
-    "label": "omp",
-    "checked": "[[ \"$(omarchy-default-agent)\" == \"omp\" ]]",
-    "action": "omarchy-default-agent omp"
-  },
-  "setup.default.agent.opencode": {
-    "icon": "",
-    "iconFont": "omarchy",
-    "label": "OpenCode",
-    "checked": "[[ \"$(omarchy-default-agent)\" == \"opencode\" ]]",
-    "action": "omarchy-default-agent opencode"
-  },
-  "setup.default.agent.pi": {
-    "icon": "",
-    "iconFont": "omarchy",
-    "label": "Pi",
-    "checked": "[[ \"$(omarchy-default-agent)\" == \"pi\" ]]",
-    "action": "omarchy-default-agent pi"
+backup_file "$MENU_EXT"
+
+node - << 'NODE_EOF'
+const fs = require('fs');
+const omarchyPath = process.env.OMARCHY_PATH || '/usr/share/omarchy';
+const defaultMenuFile = `${omarchyPath}/default/omarchy/omarchy-menu.jsonc`;
+const userMenuFile = process.env.HOME + '/.config/omarchy/extensions/omarchy-menu.jsonc';
+
+let defaultMenu = {};
+if (fs.existsSync(defaultMenuFile)) {
+  try {
+    const raw = fs.readFileSync(defaultMenuFile, 'utf8')
+      .replace(/^\s*\/\/[^\n]*(\n|$)/gm, '')
+      .replace(/,(\s*[}\]])/g, '$1');
+    defaultMenu = JSON.parse(raw);
+  } catch (e) {
+    console.error("Error reading default menu:", e);
   }
 }
-INNER_EOF
 
-# 9. Configure Hyprland keybindings
+// 1. Discover all agent slots in order from the system menu
+const agentSlots = Object.keys(defaultMenu)
+  .filter(id => id.startsWith('setup.default.agent.') && id.split('.').length === 4);
+
+// 2. Extract active upstream agent definitions (excluding deprecated gemini)
+const upstreamAgents = agentSlots
+  .filter(id => id !== 'setup.default.agent.gemini')
+  .map(id => defaultMenu[id]);
+
+// 3. Define Antigravity top entry
+const agyEntry = {
+  icon: "󰚩",
+  iconFont: "",
+  label: "Antigravity (agy)",
+  checked: '[[ "$(omarchy-default-agent)" == "agy" ]]',
+  action: "omarchy-default-agent agy"
+};
+
+// 4. Combine: Antigravity first, followed dynamically by all discovered upstream agents
+const allAgents = [agyEntry, ...upstreamAgents];
+const dynamicMapping = {};
+
+// 5. Dynamically assign each agent to the available slots in exact order
+allAgents.forEach((agent, index) => {
+  const slotId = agentSlots[index] || `setup.default.agent.custom_${index}`;
+  dynamicMapping[slotId] = Object.assign({}, agent);
+});
+
+// 6. Non-destructively merge with existing user menu extensions
+let userExisting = {};
+if (fs.existsSync(userMenuFile)) {
+  try {
+    const rawUser = fs.readFileSync(userMenuFile, 'utf8')
+      .replace(/^\s*\/\/[^\n]*(\n|$)/gm, '')
+      .replace(/,(\s*[}\]])/g, '$1');
+    userExisting = JSON.parse(rawUser);
+  } catch (e) {}
+}
+
+const finalMerged = Object.assign({}, userExisting, dynamicMapping);
+fs.writeFileSync(userMenuFile, JSON.stringify(finalMerged, null, 2) + '\n');
+console.log("==> Dynamically loaded and mapped", allAgents.length, "agents into Omarchy menu.");
+NODE_EOF
+
+# 9. Configure Hyprland keybindings (non-destructive append)
 HYPR_BINDINGS="$HOME/.config/hypr/bindings.lua"
 if [[ -f "$HYPR_BINDINGS" ]]; then
+  backup_file "$HYPR_BINDINGS"
   if ! grep -q "Agent (Antigravity)" "$HYPR_BINDINGS"; then
     cat << 'INNER_EOF' >> "$HYPR_BINDINGS"
 
@@ -262,6 +281,7 @@ fi
 # 10. Ensure Hyprland PATH includes ~/.local/bin
 HYPR_MAIN="$HOME/.config/hypr/hyprland.lua"
 if [[ -f "$HYPR_MAIN" ]] && ! grep -q "hl.env(\"PATH\"" "$HYPR_MAIN"; then
+  backup_file "$HYPR_MAIN"
   cat << 'INNER_EOF' >> "$HYPR_MAIN"
 
 -- Ensure user local bin is prioritized in Hyprland
