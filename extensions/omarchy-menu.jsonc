@@ -1,0 +1,14 @@
+{
+  "setup.default.agent.agy": {
+    "icon": "󰚩",
+    "label": "Antigravity (agy)",
+    "checked": "[[ \"$(omarchy-default-agent)\" == \"agy\" ]]",
+    "action": "omarchy-default-agent agy"
+  },
+  "setup.default.agent.gemini": {
+    "icon": "󰫢",
+    "label": "Gemini (mapped to agy)",
+    "checked": "[[ \"$(omarchy-default-agent)\" == \"gemini\" || \"$(omarchy-default-agent)\" == \"agy\" ]]",
+    "action": "omarchy-default-agent agy"
+  }
+}

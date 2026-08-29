@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "id": "zowiehi.antimarchy",
+  "name": "Antimarchy",
+  "version": "1.0.0",
+  "author": "zowiehi",
+  "license": "MIT",
+  "description": "First-class Google Antigravity (agy) AI coding agent integration for Omarchy.",
+  "kinds": ["service"],
+  "entryPoints": {
+    "service": "Service.qml"
+  }
+}
