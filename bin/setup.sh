@@ -139,10 +139,9 @@ fi
 # 7. Configure Omarchy default agent to agy
 echo "agy" > "$HOME/.config/omarchy/defaults/agent"
 
-# 8. Add Antigravity entry to Omarchy menu extension
+# 8. Add Antigravity entry and hide deprecated Gemini in Omarchy menu extension
 MENU_EXT="$HOME/.config/omarchy/extensions/omarchy-menu.jsonc"
-if [[ ! -f "$MENU_EXT" ]]; then
-  cat << 'INNER_EOF' > "$MENU_EXT"
+cat << 'INNER_EOF' > "$MENU_EXT"
 {
   "setup.default.agent.agy": {
     "icon": "󰚩",
@@ -151,20 +150,10 @@ if [[ ! -f "$MENU_EXT" ]]; then
     "action": "omarchy-default-agent agy"
   },
   "setup.default.agent.gemini": {
-    "icon": "󰫢",
-    "label": "Gemini (mapped to agy)",
-    "checked": "[[ \"$(omarchy-default-agent)\" == \"gemini\" || \"$(omarchy-default-agent)\" == \"agy\" ]]",
-    "action": "omarchy-default-agent agy"
+    "when": "false"
   }
 }
 INNER_EOF
-else
-  # If file exists and doesn't mention agy, merge or instruct
-  if ! grep -q "setup.default.agent.agy" "$MENU_EXT"; then
-    echo "ℹ️  Updating $MENU_EXT with Antigravity menu items..."
-    sed -i 's/}/  "setup.default.agent.agy": {"icon":"󰚩","label":"Antigravity (agy)","checked":"[[ \\"$(omarchy-default-agent)\\" == \\"agy\\" ]]","action":"omarchy-default-agent agy"},\n  "setup.default.agent.gemini": {"icon":"󰫢","label":"Gemini (mapped to agy)","checked":"[[ \\"$(omarchy-default-agent)\\" == \\"gemini\\" || \\"$(omarchy-default-agent)\\" == \\"agy\\" ]]","action":"omarchy-default-agent agy"}\n}/' "$MENU_EXT" 2>/dev/null || true
-  fi
-fi
 
 # 9. Configure Hyprland keybindings
 HYPR_BINDINGS="$HOME/.config/hypr/bindings.lua"
