@@ -12,7 +12,7 @@ if [[ "${1:-}" != "-y" && "${1:-}" != "--yes" ]]; then
   echo "  1. Install 'antigravity-cli' via AUR (yay/paru) if missing"
   echo "  2. Configure Antigravity as your Omarchy default agent"
   echo "  3. Dynamically configure Omarchy menu to place Antigravity at the top"
-  echo "  4. Add Super+Shift+A & Super+Shift+Ctrl+A hotkeys to ~/.config/hypr/bindings.lua"
+  echo "  4. Add Super+Shift+Ctrl+A hotkeys to ~/.config/hypr/bindings.lua"
   echo "  5. Clean up deprecated Gemini CLI package references in Mise"
   echo "  (Automatic backups of any modified files will be created)"
   echo ""
@@ -268,11 +268,9 @@ if [[ -f "$HYPR_BINDINGS" ]]; then
   if ! grep -q "Agent (Antigravity)" "$HYPR_BINDINGS"; then
     cat << 'INNER_EOF' >> "$HYPR_BINDINGS"
 
--- Ensure Super+Shift+A and Super+Shift+Ctrl+A launch Antigravity (agy)
-hl.unbind("SUPER + SHIFT + A")
+-- Ensure Super+Shift+Ctrl+A launch Antigravity (agy)
 hl.unbind("SUPER + SHIFT + CTRL + A")
 
-o.bind("SUPER + SHIFT + A", "Agent (Antigravity)", "omarchy-launch-tui --app-id=org.omarchy.agent agy --dangerously-skip-permissions")
 o.bind("SUPER + SHIFT + CTRL + A", "Agent (Antigravity)", "omarchy-launch-tui --app-id=org.omarchy.agent agy --dangerously-skip-permissions")
 INNER_EOF
   fi
@@ -296,4 +294,4 @@ fi
 
 echo "✅ Antigravity setup completed successfully!"
 echo "   Default agent: $(omarchy-default-agent)"
-echo "   Keybindings: Super+Shift+A and Super+Shift+Ctrl+A"
+echo "   Keybindings: Super+Shift+Ctrl+A"
