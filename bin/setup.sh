@@ -11,9 +11,10 @@ if [[ "${1:-}" != "-y" && "${1:-}" != "--yes" ]]; then
   echo "This setup script will:"
   echo "  1. Install 'antigravity-cli' via AUR (yay/paru) if missing"
   echo "  2. Configure Antigravity as your Omarchy default agent"
-  echo "  3. Dynamically configure Omarchy menu to place Antigravity at the top"
-  echo "  4. Add Super+Shift+A & Super+Shift+Ctrl+A hotkeys to ~/.config/hypr/bindings.lua"
-  echo "  5. Clean up deprecated Gemini CLI package references in Mise"
+  echo "  3. Install Antigravity desktop & application icon assets"
+  echo "  4. Dynamically configure Omarchy menu to place Antigravity at the top"
+  echo "  5. Add Super+Shift+A & Super+Shift+Ctrl+A hotkeys to ~/.config/hypr/bindings.lua"
+  echo "  6. Clean up deprecated Gemini CLI package references in Mise"
   echo "  (Automatic backups of any modified files will be created)"
   echo ""
   read -r -p "Do you want to proceed with this configuration? [y/N] " confirm
@@ -32,6 +33,8 @@ backup_file() {
   fi
 }
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
 # 1. Install agy if missing
 if ! command -v agy &>/dev/null; then
   echo "==> Antigravity CLI ('agy') not found. Installing via AUR..."
@@ -44,10 +47,26 @@ if ! command -v agy &>/dev/null; then
   fi
 fi
 
-# 2. Ensure directories exist
+# 2. Install Antigravity icon assets
+if [[ -d "$SCRIPT_DIR/icons" ]]; then
+  echo "==> Installing Antigravity icon assets..."
+  for s in 16 32 48 64 128 256; do
+    if [[ -f "$SCRIPT_DIR/icons/antigravity-${s}x${s}.png" ]]; then
+      mkdir -p "$HOME/.local/share/icons/hicolor/${s}x${s}/apps"
+      cp "$SCRIPT_DIR/icons/antigravity-${s}x${s}.png" "$HOME/.local/share/icons/hicolor/${s}x${s}/apps/antigravity.png"
+    fi
+  done
+  if [[ -f "$SCRIPT_DIR/icons/antigravity.png" ]]; then
+    mkdir -p "$HOME/.local/share/icons/hicolor/512x512/apps"
+    cp "$SCRIPT_DIR/icons/antigravity.png" "$HOME/.local/share/icons/hicolor/512x512/apps/antigravity.png"
+  fi
+  gtk-update-icon-cache "$HOME/.local/share/icons/hicolor" 2>/dev/null || true
+fi
+
+# 3. Ensure directories exist
 mkdir -p "$HOME/.local/bin" "$HOME/.config/omarchy/defaults" "$HOME/.config/omarchy/extensions"
 
-# 3. Create omarchy-default-agent wrapper
+# 4. Create omarchy-default-agent wrapper
 cat << 'INNER_EOF' > "$HOME/.local/bin/omarchy-default-agent"
 #!/bin/bash
 agent_file="$HOME/.config/omarchy/defaults/agent"
@@ -105,7 +124,7 @@ esac
 INNER_EOF
 chmod +x "$HOME/.local/bin/omarchy-default-agent"
 
-# 4. Create omarchy-agent wrapper
+# 5. Create omarchy-agent wrapper
 cat << 'INNER_EOF' > "$HOME/.local/bin/omarchy-agent"
 #!/bin/bash
 inline=false
@@ -160,7 +179,7 @@ fi
 INNER_EOF
 chmod +x "$HOME/.local/bin/omarchy-agent"
 
-# 5. Create compatibility gemini shim
+# 6. Create compatibility gemini shim
 cat << 'INNER_EOF' > "$HOME/.local/bin/gemini"
 #!/bin/bash
 # Shim translating legacy gemini CLI calls to agy
@@ -182,7 +201,7 @@ exec agy "${args[@]}"
 INNER_EOF
 chmod +x "$HOME/.local/bin/gemini"
 
-# 6. Remove stale gemini package from mise if present
+# 7. Remove stale gemini package from mise if present
 if command -v mise &>/dev/null; then
   mise uninstall gemini 2>/dev/null || true
   mise prune -y 2>/dev/null || true
@@ -192,10 +211,10 @@ if command -v mise &>/dev/null; then
   mise reshim 2>/dev/null || true
 fi
 
-# 7. Configure Omarchy default agent to agy
+# 8. Configure Omarchy default agent to agy
 echo "agy" > "$HOME/.config/omarchy/defaults/agent"
 
-# 8. Dynamically construct menu configuration by inspecting the upstream system menu
+# 9. Dynamically construct menu configuration by inspecting the upstream system menu
 MENU_EXT="$HOME/.config/omarchy/extensions/omarchy-menu.jsonc"
 backup_file "$MENU_EXT"
 
@@ -261,7 +280,7 @@ fs.writeFileSync(userMenuFile, JSON.stringify(finalMerged, null, 2) + '\n');
 console.log("==> Dynamically loaded and mapped", allAgents.length, "agents into Omarchy menu.");
 NODE_EOF
 
-# 9. Configure Hyprland keybindings (non-destructive append)
+# 10. Configure Hyprland keybindings (non-destructive append)
 HYPR_BINDINGS="$HOME/.config/hypr/bindings.lua"
 if [[ -f "$HYPR_BINDINGS" ]]; then
   backup_file "$HYPR_BINDINGS"
@@ -278,7 +297,7 @@ INNER_EOF
   fi
 fi
 
-# 10. Ensure Hyprland PATH includes ~/.local/bin
+# 11. Ensure Hyprland PATH includes ~/.local/bin
 HYPR_MAIN="$HOME/.config/hypr/hyprland.lua"
 if [[ -f "$HYPR_MAIN" ]] && ! grep -q "hl.env(\"PATH\"" "$HYPR_MAIN"; then
   backup_file "$HYPR_MAIN"
@@ -289,7 +308,7 @@ hl.env("PATH", (os.getenv("HOME") or "/home/zehd") .. "/.local/bin:" .. (os.gete
 INNER_EOF
 fi
 
-# 11. Reload Hyprland if active
+# 12. Reload Hyprland if active
 if command -v hyprctl &>/dev/null; then
   hyprctl reload 2>/dev/null || true
 fi
