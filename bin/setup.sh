@@ -230,7 +230,7 @@ const upstreamAgents = agentSlots
 const agyEntry = {
   icon: "󰚩",
   iconFont: "",
-  label: "Antigravity (agy)",
+  label: "Antigravity",
   checked: '[[ "$(omarchy-default-agent)" == "agy" ]]',
   action: "omarchy-default-agent agy"
 };
