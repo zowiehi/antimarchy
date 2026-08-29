@@ -139,18 +139,72 @@ fi
 # 7. Configure Omarchy default agent to agy
 echo "agy" > "$HOME/.config/omarchy/defaults/agent"
 
-# 8. Add Antigravity entry and hide deprecated Gemini in Omarchy menu extension
+# 8. Reorder Omarchy agent menu to place Antigravity at the top
 MENU_EXT="$HOME/.config/omarchy/extensions/omarchy-menu.jsonc"
 cat << 'INNER_EOF' > "$MENU_EXT"
 {
-  "setup.default.agent.agy": {
+  "setup.default.agent.claude": {
     "icon": "󰚩",
+    "iconFont": "",
     "label": "Antigravity (agy)",
     "checked": "[[ \"$(omarchy-default-agent)\" == \"agy\" ]]",
     "action": "omarchy-default-agent agy"
   },
+  "setup.default.agent.codex": {
+    "icon": "󰛄",
+    "iconFont": "",
+    "label": "Claude",
+    "checked": "[[ \"$(omarchy-default-agent)\" == \"claude\" ]]",
+    "action": "omarchy-default-agent claude"
+  },
+  "setup.default.agent.copilot": {
+    "icon": "",
+    "iconFont": "omarchy",
+    "label": "Codex",
+    "checked": "[[ \"$(omarchy-default-agent)\" == \"codex\" ]]",
+    "action": "omarchy-default-agent codex"
+  },
+  "setup.default.agent.crush": {
+    "icon": "",
+    "iconFont": "",
+    "label": "Copilot",
+    "checked": "[[ \"$(omarchy-default-agent)\" == \"copilot\" ]]",
+    "action": "omarchy-default-agent copilot"
+  },
   "setup.default.agent.gemini": {
-    "when": "false"
+    "icon": "󰋑",
+    "iconFont": "",
+    "label": "Crush",
+    "checked": "[[ \"$(omarchy-default-agent)\" == \"crush\" ]]",
+    "action": "omarchy-default-agent crush"
+  },
+  "setup.default.agent.grok": {
+    "icon": "",
+    "iconFont": "omarchy",
+    "label": "Grok",
+    "checked": "[[ \"$(omarchy-default-agent)\" == \"grok\" ]]",
+    "action": "omarchy-default-agent grok"
+  },
+  "setup.default.agent.omp": {
+    "icon": "",
+    "iconFont": "omarchy",
+    "label": "omp",
+    "checked": "[[ \"$(omarchy-default-agent)\" == \"omp\" ]]",
+    "action": "omarchy-default-agent omp"
+  },
+  "setup.default.agent.opencode": {
+    "icon": "",
+    "iconFont": "omarchy",
+    "label": "OpenCode",
+    "checked": "[[ \"$(omarchy-default-agent)\" == \"opencode\" ]]",
+    "action": "omarchy-default-agent opencode"
+  },
+  "setup.default.agent.pi": {
+    "icon": "",
+    "iconFont": "omarchy",
+    "label": "Pi",
+    "checked": "[[ \"$(omarchy-default-agent)\" == \"pi\" ]]",
+    "action": "omarchy-default-agent pi"
   }
 }
 INNER_EOF
